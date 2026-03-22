@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Alura · Spa de Uñas</title>
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script type="module" src="firebase-init.js"></script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="header">
+  <div>
+    <h1 class="header-title">Alura</h1>
+    <p class="header-sub">Spa de Uñas · by Valentina Rodríguez</p>
+  </div>
+  <span class="header-icon">💅</span>
+</header>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showSection('cotizador',this)"><span class="ni">🧮</span><span>Cotizador</span></button>
+  <button class="nav-btn" onclick="showSection('agenda',this)"><span class="ni">◷</span><span>Agenda</span></button>
+  <button class="nav-btn" onclick="showSection('servicios',this)"><span class="ni">✦</span><span>Servicios</span></button>
+  <button class="nav-btn" onclick="showSection('inventario',this)"><span class="ni">◈</span><span>Inventario</span></button>
+  <button class="nav-btn" onclick="showSection('finanzas',this)"><span class="ni">◉</span><span>Finanzas</span></button>
+  <button class="nav-btn" onclick="showSection('clientes',this)"><span class="ni">✿</span><span>Clientes</span></button>
+  <button class="nav-btn" onclick="showSection('reservas',this)"><span class="ni">📋</span><span>Reservas</span></button>
+</nav>
+
+<div id="global-loader" class="global-loader"><div class="spin"></div><p>Cargando...</p></div>
+
+<main class="content">
+
+<!-- COTIZADOR -->
+<section id="cotizador" class="section active">
+  <div class="price-hero">
+    <p class="hero-lbl">Precio sugerido</p>
+    <p class="hero-price" id="cot-price">$—</p>
+    <div class="hero-grid">
+      <div class="hero-stat"><span class="stat-lbl">Costos directos</span><span class="stat-val" id="cot-cost">—</span></div>
+      <div class="hero-stat"><span class="stat-lbl">Ganancia</span><span class="stat-val" id="cot-gain">—</span></div>
+      <div class="hero-stat"><span class="stat-lbl">Tiempo</span><span class="stat-val" id="cot-time">—</span></div>
+      <div class="hero-stat"><span class="stat-lbl">Precio real</span><span class="stat-val" id="cot-real">—</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2 class="card-title">⚙️ Configurar</h2>
+    <label class="field-label">Servicio</label>
+    <select class="field-select" id="cot-service" onchange="calcCotizador()"><option value="">— Selecciona —</option></select>
+    <label class="field-label">Margen de ganancia: <strong id="cot-mgn">35%</strong></label>
+    <input type="range" class="slider" min="10" max="60" value="35" step="5" id="cot-slider" oninput="document.getElementById('cot-mgn').textContent=this.value+'%';calcCotizador()">
+    <label class="field-label" style="margin-top:10px">Extras / efectos</label>
+    <div class="extras-grid">
+      <label class="extra-chip"><input type="checkbox" value="500" onchange="calcCotizador()"> Aurora</label>
+      <label class="extra-chip"><input type="checkbox" value="1000" onchange="calcCotizador()"> Barriles</label>
+      <label class="extra-chip"><input type="checkbox" value="1500" onchange="calcCotizador()"> Terciopelo</label>
+      <label class="extra-chip"><input type="checkbox" value="2000" onchange="calcCotizador()"> Nail Art Av.</label>
+      <label class="extra-chip"><input type="checkbox" value="2000" onchange="calcCotizador()"> Nail Art Med.</label>
+      <label class="extra-chip"><input type="checkbox" value="1000" onchange="calcCotizador()"> Flakes</label>
+      <label class="extra-chip"><input type="checkbox" value="1000" onchange="calcCotizador()"> Relieves</label>
+      <label class="extra-chip"><input type="checkbox" value="1000" onchange="calcCotizador()"> Flor 3D</label>
+    </div>
+  </div>
+</section>
+
+<!-- AGENDA -->
+<section id="agenda" class="section">
+  <div class="agenda-card">
+    <div><p class="agenda-lbl">Hoy</p><p class="agenda-fecha" id="agenda-hoy-fecha"></p></div>
+    <div class="agenda-count"><span id="agenda-count">0</span><span class="agenda-count-lbl">citas</span></div>
+  </div>
+  <div class="card"><h2 class="card-title">Citas de hoy</h2><div id="agenda-hoy-list"><p class="empty-msg">Sin citas para hoy 🌟</p></div></div>
+  <div class="card"><h2 class="card-title">Próximas citas</h2><div id="agenda-prox-list"><p class="empty-msg">Sin citas próximas</p></div></div>
+  <button class="btn-primary" onclick="openModal('modal-agenda')">+ Agendar cita</button>
+  <button class="btn-secondary" onclick="limpiarPasadas()">🗑️ Eliminar citas pasadas</button>
+</section>
+
+<!-- SERVICIOS -->
+<section id="servicios" class="section">
+  <div class="card"><h2 class="card-title">Menú de servicios</h2><div id="services-list"><p class="empty-msg">Cargando...</p></div></div>
+  <button class="btn-primary" onclick="openModal('modal-servicio')">+ Nuevo servicio</button>
+</section>
+
+<!-- INVENTARIO -->
+<section id="inventario" class="section">
+  <div class="card"><h2 class="card-title">Stock de productos</h2><div id="inv-alerts" class="alerts-box" style="display:none"></div><div id="inv-list"><p class="empty-msg">Cargando...</p></div></div>
+  <button class="btn-primary" onclick="openModal('modal-inv')">+ Agregar producto</button>
+</section>
+
+<!-- FINANZAS -->
+<section id="finanzas" class="section">
+  <div class="mes-header"><span class="mes-titulo" id="mes-nombre"></span><span class="mes-badge" id="mes-badge"></span></div>
+  <div class="summary-row">
+    <div class="summary-box income"><p class="sum-lbl">💚 Ingresos</p><p class="sum-amount" id="total-in">$0</p></div>
+    <div class="summary-box expense"><p class="sum-lbl">🔴 Egresos</p><p class="sum-amount" id="total-out">$0</p></div>
+  </div>
+  <div class="net-box"><p class="net-lbl">Balance neto del mes</p><p class="net-amount" id="net-bal">$0</p><p class="net-sub" id="net-sub">—</p></div>
+  <div class="card" id="chart-card" style="display:none"><h2 class="card-title">Ingresos por semana</h2><div class="weekly-chart" id="weekly-chart"></div></div>
+  <div class="card">
+    <div class="pill-tabs">
+      <button class="pill active" onclick="filterTx('all',this)">Todos</button>
+      <button class="pill" onclick="filterTx('in',this)">Ingresos</button>
+      <button class="pill" onclick="filterTx('out',this)">Egresos</button>
+    </div>
+    <div id="tx-list"><p class="empty-msg">Sin movimientos</p></div>
+  </div>
+  <button class="btn-primary" onclick="openModal('modal-tx')">+ Registrar movimiento</button>
+</section>
+
+<!-- CLIENTES -->
+<section id="clientes" class="section">
+  <div class="card">
+    <h2 class="card-title">Clientas fieles</h2>
+    <input class="field-input" id="client-search" placeholder="🔍 Buscar clienta..." oninput="renderClientes()" style="margin-bottom:12px">
+    <div id="clients-list"><p class="empty-msg">Cargando...</p></div>
+  </div>
+  <button class="btn-primary" onclick="openModal('modal-client')" style="margin-bottom:8px">+ Nueva clienta</button>
+  <button class="btn-primary" onclick="abrirWhatsApp()" style="background:linear-gradient(135deg,#25D366,#128C7E);color:white;box-shadow:0 4px 18px rgba(37,211,102,0.22)">📲 Enviar recordatorio</button>
+</section>
+
+<!-- RESERVAS -->
+<section id="reservas" class="section">
+  <div class="agenda-card">
+    <div><p class="agenda-lbl">Reservas online</p><p class="agenda-fecha">De tus clientas</p></div>
+    <div class="agenda-count"><span id="reservas-count">0</span><span class="agenda-count-lbl">total</span></div>
+  </div>
+  <div class="card">
+    <div class="pill-tabs">
+      <button class="pill active" onclick="filterReservas('todas',this)">Todas</button>
+      <button class="pill" onclick="filterReservas('proximas',this)">Próximas</button>
+      <button class="pill" onclick="filterReservas('pasadas',this)">Pasadas</button>
+    </div>
+    <div id="reservas-list"><p class="empty-msg">Cargando reservas...</p></div>
+  </div>
+</section>
+
+</main>
+
+<!-- MODALES -->
+<div class="modal-overlay" id="modal-servicio">
+  <div class="modal-sheet">
+    <div class="modal-header"><h3 class="modal-title">Nuevo servicio</h3><button class="modal-close" onclick="closeModal('modal-servicio')">✕</button></div>
+    <label class="field-label">Nombre del servicio</label><input class="field-input" id="s-name" placeholder="Ej: Uñas acrílicas">
+    <div class="field-row">
+      <div><label class="field-label">Tiempo (horas)</label><input class="field-input" id="s-time" type="number" placeholder="2" step="0.5"></div>
+      <div><label class="field-label">Precio ($)</label><input class="field-input" id="s-price" type="number" placeholder="45000"></div>
+    </div>
+    <button class="btn-primary" style="margin-top:16px" id="btn-sv" onclick="saveServicio()">Guardar servicio</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-inv">
+  <div class="modal-sheet">
+    <div class="modal-header"><h3 class="modal-title">Nuevo producto</h3><button class="modal-close" onclick="closeModal('modal-inv')">✕</button></div>
+    <label class="field-label">Nombre</label><input class="field-input" id="i-name" placeholder="Ej: Esmalte nuevo">
+    <label class="field-label">Categoría</label>
+    <select class="field-select" id="i-cat"><option>ESMALTE</option><option>GEL</option><option>ACRÍLICO</option><option>INSUMO</option><option>HERRAMIENTA</option><option>OTRO</option></select>
+    <div class="field-row">
+      <div><label class="field-label">Stock</label><input class="field-input" id="i-stock" type="number" placeholder="5"></div>
+      <div><label class="field-label">Mínimo</label><input class="field-input" id="i-min" type="number" placeholder="2"></div>
+    </div>
+    <label class="field-label">Costo unitario ($)</label><input class="field-input" id="i-cost" type="number" placeholder="13000">
+    <button class="btn-primary" style="margin-top:16px" id="btn-inv" onclick="saveInventario()">Guardar producto</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-tx">
+  <div class="modal-sheet">
+    <div class="modal-header"><h3 class="modal-title">Nuevo movimiento</h3><button class="modal-close" onclick="closeModal('modal-tx')">✕</button></div>
+    <div class="pill-tabs">
+      <button class="pill active" id="tx-pill-in" onclick="setTxType('in',this)">💚 Ingreso</button>
+      <button class="pill" id="tx-pill-out" onclick="setTxType('out',this)">🔴 Egreso</button>
+    </div>
+    <label class="field-label">Descripción</label><input class="field-input" id="tx-desc" placeholder="Ej: Sof gel con diseño">
+    <div class="field-row">
+      <div><label class="field-label">Fecha</label><input class="field-input" id="tx-date" type="date"></div>
+      <div><label class="field-label">Valor ($)</label><input class="field-input" id="tx-amount" type="number" placeholder="75000"></div>
+    </div>
+    <label class="field-label">Forma de pago</label>
+    <select class="field-select" id="tx-pay"><option>Efectivo</option><option>Transferencia</option><option>Nequi</option><option>Daviplata</option><option>Tarjeta</option></select>
+    <button class="btn-primary" style="margin-top:16px" id="btn-tx" onclick="saveFinanza()">Registrar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-client">
+  <div class="modal-sheet">
+    <div class="modal-header"><h3 class="modal-title">Nueva clienta</h3><button class="modal-close" onclick="closeModal('modal-client')">✕</button></div>
+    <label class="field-label">Nombre completo</label><input class="field-input" id="c-name" placeholder="Nombre de la clienta">
+    <div class="field-row">
+      <div><label class="field-label">Teléfono</label><input class="field-input" id="c-phone" type="tel" placeholder="300 123 4567"></div>
+      <div><label class="field-label">Primera cita</label><input class="field-input" id="c-date" type="date"></div>
+    </div>
+    <label class="field-label">Servicio favorito</label>
+    <select class="field-select" id="c-service"><option value="">— Selecciona —</option><option>Manicura Semi</option><option>Sof Gel</option><option>Builder Gel</option><option>Recubrimiento Acrílico</option><option>Rubber Base</option><option>Poligel</option><option>Pedicura Básica</option><option>Pedicura Premium</option></select>
+    <label class="field-label">Notas</label><input class="field-input" id="c-notes" placeholder="Alergias, preferencias...">
+    <button class="btn-primary" style="margin-top:16px" id="btn-cl" onclick="saveCliente()">Guardar clienta</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-agenda">
+  <div class="modal-sheet">
+    <div class="modal-header"><h3 class="modal-title">Agendar cita</h3><button class="modal-close" onclick="closeModal('modal-agenda')">✕</button></div>
+    <label class="field-label">Nombre de la clienta</label><input class="field-input" id="ag-nombre" placeholder="Nombre completo" list="ag-dl"><datalist id="ag-dl"></datalist>
+    <label class="field-label">Servicio</label>
+    <select class="field-select" id="ag-servicio"><option value="">— Selecciona —</option><option>Manicura Semi</option><option>Sof Gel</option><option>Builder Gel</option><option>Recubrimiento Acrílico</option><option>Rubber Base</option><option>Poligel</option><option>Pedicura Básica</option><option>Pedicura Premium</option><option>PAQ Semi Manos+Pies</option><option>PAQ Premium</option><option>PAQ Gel Lover</option><option>PAQ Caballero</option></select>
+    <div class="field-row">
+      <div><label class="field-label">Fecha</label><input class="field-input" id="ag-fecha" type="date"></div>
+      <div><label class="field-label">Hora</label><input class="field-input" id="ag-hora" type="time" value="09:00"></div>
+    </div>
+    <label class="field-label">Notas (opcional)</label><input class="field-input" id="ag-notas" placeholder="Ej: diseño floral">
+    <button class="btn-primary" style="margin-top:16px" id="btn-ag" onclick="saveAgenda()">Confirmar cita</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-whatsapp">
+  <div class="modal-sheet">
+    <div class="modal-header"><h3 class="modal-title">Recordatorio WhatsApp</h3><button class="modal-close" onclick="closeModal('modal-whatsapp')">✕</button></div>
+    <label class="field-label">Clienta</label><select class="field-select" id="wa-client" onchange="previewWA()"></select>
+    <label class="field-label">Servicio</label><select class="field-select" id="wa-service" onchange="previewWA()"><option>Manicura Semi</option><option>Sof Gel</option><option>Builder Gel</option><option>Recubrimiento Acrílico</option><option>Rubber Base</option><option>Poligel</option><option>Pedicura Básica</option><option>Pedicura Premium</option></select>
+    <div class="field-row">
+      <div><label class="field-label">Fecha</label><input class="field-input" id="wa-fecha" type="date" onchange="previewWA()"></div>
+      <div><label class="field-label">Hora</label><input class="field-input" id="wa-hora" type="time" value="10:00" onchange="previewWA()"></div>
+    </div>
+    <label class="field-label">Vista previa</label><div class="wa-preview" id="wa-preview"></div>
+    <button class="btn-primary" style="margin-top:16px;background:linear-gradient(135deg,#25D366,#128C7E);color:white;box-shadow:0 4px 16px rgba(37,211,102,0.25)" onclick="enviarWA()">📲 Abrir en WhatsApp</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
